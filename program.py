@@ -55,34 +55,44 @@ if dataframes:
 
     # Ask for grouping and numeric columns
     groupby_column = input("Enter the column name to group by (e.g., Category): ")
-    numeric_column = input("Enter the numeric column to analyze (e.g., Sales): ")
+    numeric_columns = input("Enter the numeric column(s) to analyze (separated by comma if multiple): ").split(',')
+    numeric_columns = [col.strip() for col in numeric_columns]  # Clean whitespace
 
-    if groupby_column in concatenated_df.columns and numeric_column in concatenated_df.columns:
-        # Group by column and aggregate the numeric column
-        grouped_df = concatenated_df.groupby(groupby_column)[numeric_column].agg(['sum', 'max', 'min']).reset_index()
-        print("\nGrouped Data:")
-        print(grouped_df)
-        
-        # Plotting the grouped data
-        plt.figure(figsize=(10, 6))
-        
-        # Line graph for max and min
-        plt.plot(grouped_df[groupby_column], grouped_df['max'], label='Max Values', marker='o', color='blue')
-        plt.plot(grouped_df[groupby_column], grouped_df['min'], label='Min Values', marker='o', color='red')
-        
-        # Bar chart for sum
-        plt.bar(grouped_df[groupby_column], grouped_df['sum'], alpha=0.5, label='Sum Values', color='green')
-        
-        plt.title(f"Analysis of {numeric_column} by {groupby_column}", fontsize=16)
-        plt.xlabel(groupby_column, fontsize=14)
-        plt.ylabel(numeric_column, fontsize=14)
-        plt.legend()
-        plt.grid(alpha=0.3)
-        plt.xticks(rotation=45)  # Rotate x-axis labels if necessary
+    # Verify all columns exist
+    if groupby_column in concatenated_df.columns and all(col in concatenated_df.columns for col in numeric_columns):
+        # Create a figure with subplots for each numeric column
+        n_cols = len(numeric_columns)
+        fig, axes = plt.subplots(n_cols, 1, figsize=(12, 6*n_cols))
+        if n_cols == 1:
+            axes = [axes]  # Make axes iterable when there's only one subplot
+
+        for i, numeric_column in enumerate(numeric_columns):
+            # Group by column and aggregate the numeric column
+            grouped_df = concatenated_df.groupby(groupby_column)[numeric_column].agg(['sum', 'max', 'min']).reset_index()
+            print(f"\nGrouped Data for {numeric_column}:")
+            print(grouped_df)
+            
+            # Plotting
+            ax = axes[i]
+            
+            # Line graph for max and min
+            ax.plot(grouped_df[groupby_column], grouped_df['max'], label='Max', marker='o', color='blue')
+            ax.plot(grouped_df[groupby_column], grouped_df['min'], label='Min', marker='o', color='red')
+            
+            # Bar chart for sum
+            ax.bar(grouped_df[groupby_column], grouped_df['sum'], alpha=0.5, label='Sum', color='green')
+            
+            ax.set_title(f"Analysis of {numeric_column} by {groupby_column}", fontsize=12)
+            ax.set_xlabel(groupby_column, fontsize=10)
+            ax.set_ylabel(numeric_column, fontsize=10)
+            ax.legend()
+            ax.grid(alpha=0.3)
+            ax.tick_params(axis='x', rotation=45)
+
         plt.tight_layout()
         plt.show()
     else:
-        print("Error: Specified columns not found in the DataFrame.")
+        print("Error: One or more specified columns not found in the DataFrame.")
 else:
     print("No valid files were processed.")
 
